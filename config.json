@@ -1,0 +1,23 @@
+{
+  "player": {
+    "volume": 80
+  },
+  "ui": {
+    "modes": ["Waveform", "Spectrum", "Disco"]
+  },
+  "theme": {
+    "background_waveform": "#000000",
+    "background_spectrum": "#FFFFFF",
+    "line_color": "#0000FF",
+    "fill_color": [0, 0, 255, 255]
+  },
+  "disco": {
+    "color_speed": 0.1
+  },
+  "visualization": {
+    "fps": 60,
+    "fill": true,
+    "smoothing_enabled": true,
+    "smoothing_window": 3
+  }
+}
