@@ -16,7 +16,7 @@ class AudioPlayer:
 
     def load(self, path):
         self.stop()
-        self.audio_data, self.samplerate = sf.read(path, dtype='float32')
+        self.audio_data, self.samplerate = sf.read(path, dtype='float32', always_2d=True)
         self.position = 0
 
     def callback(self, outdata, frames, time, status):
@@ -31,6 +31,8 @@ class AudioPlayer:
             if len(chunk) < frames:
                 chunk = np.pad(chunk, ((0, frames - len(chunk)), (0, 0)))
                 self.playing = False
+                self.position = 0
+                sd.sleep(int(frames / self.samplerate * 1000))
 
             outdata[:] = chunk * self.volume
             self.position += frames
@@ -67,13 +69,14 @@ class AudioPlayer:
             self.stream.start()
 
     def stop(self):
-        self.playing = False
-        self.paused = False
-        self.position = 0
-        if self.stream is not None:
-            self.stream.stop()
-            self.stream.close()
-            self.stream = None
+        with self.lock:
+            self.playing = False
+            self.paused = False
+            self.position = 0
+            if self.stream is not None:
+                self.stream.stop()
+                self.stream.close()
+                self.stream = None
 
     def set_volume(self, volume):
         self.volume = volume
@@ -82,6 +85,7 @@ class AudioPlayer:
         if self.audio_data is None:
             return
         with self.lock:
+            fraction = max(0, min(1, fraction))
             self.position = int(len(self.audio_data) * fraction)
 
     def get_current_frame(self, window_size=2048):

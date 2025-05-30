@@ -110,7 +110,6 @@ class MainWindow(QMainWindow):
         central.layout().addLayout(bottom_panel)
         self.setCentralWidget(central)
 
-        # Плейлист файлов
         self.playlist = []
         self.current_track_index = -1
 
@@ -121,7 +120,7 @@ class MainWindow(QMainWindow):
         self.timer.start(1000 // fps)
 
     def toggle_play_pause(self):
-        if self.is_playing:
+        if self.player.playing and not self.player.paused:
             self.player.pause()
             self.play_pause_btn.setText("Play")
         else:
@@ -156,12 +155,13 @@ class MainWindow(QMainWindow):
 
     def load_track(self, index):
         if 0 <= index < len(self.playlist):
+            track_name = self.playlist[index].split('/')[-1]
+            self.setWindowTitle(f"NinjaProGodVisuals1337 - {track_name}")
             self.player.load(self.playlist[index])
             self.player.set_volume(self.volume_slider.value() / 100)
             self.play_pause_btn.setText("Play")
             self.is_playing = False
             self.playlist_widget.setCurrentRow(index)
-            # Сбрасываем фон при загрузке трека
             self.reset_background()
 
     def play_selected(self, item):
@@ -212,6 +212,11 @@ class MainWindow(QMainWindow):
             # Для диско фон управляется динамически в update_visualization
             pass
 
+    def closeEvent(self, event):
+        self.timer.stop()
+        self.player.stop()
+        event.accept()
+
     def update_visualization(self):
         data = self.player.get_current_frame()
         if data.size == 0:
@@ -234,20 +239,17 @@ class MainWindow(QMainWindow):
             self.fill_item.setVisible(False)
 
         elif mode == "Spectrum":
-            # Получаем спектр
             x_freq, y = self.visualizer.get_spectrum(data)
 
             # Преобразуем частоты в логарифмическую шкалу (для ОЧХ)
             x_log = np.log10(x_freq + 1)  # +1 чтобы избежать log(0)
 
-            # Нормализация амплитуды (0..1)
             y_norm = y / max(y.max(), 1e-6)
 
             self.plot.setData(x_log, y_norm)
             self.zero_line.setData(x_log, [0] * len(x_log))
             self.plot.setVisible(True)
 
-            # Настраиваем вид диапазона Y и X под спектр
             self.plot_widget.setYRange(0, 1.1, padding=0)
             self.plot_widget.setXRange(x_log.min(), x_log.max(), padding=0)
 
@@ -266,8 +268,10 @@ class MainWindow(QMainWindow):
             self.fill_item.setVisible(False)
             self.zero_line.setData([], [])
 
-        # Обновляем позицию ползунка, если он не зажат пользователем
         if not self.seek_slider.isSliderDown():
             self.seek_slider.blockSignals(True)
             self.seek_slider.setValue(int(self.player.get_progress() * 1000))
             self.seek_slider.blockSignals(False)
+
+        if self.player.get_progress() >= 0.999 and self.player.playing:
+            self.play_next()
