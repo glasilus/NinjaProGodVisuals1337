@@ -29,6 +29,7 @@ Switch between visualization modes
 Tracks automatically advance on completion
 
   🌟 Roadmap
+  
 Audio effects (EQ, reverb)
 
 More different modes
