@@ -14,6 +14,7 @@
 - **Modular Design**: Easily extendable architecture
 
   🚀 Usage
+  
 Click Load to import audio files
 
 Use playback controls:
